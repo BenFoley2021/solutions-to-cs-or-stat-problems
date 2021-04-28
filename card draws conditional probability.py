@@ -78,131 +78,128 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.random import randint
 
-@dataclass
-class ConditionalProbOfEndpoints():
-    """an object which holds data related to solving the problem using a path search 
-        method, and functions which work with that data 
+class conditionalProbOfEndpoints():
+    """An object which holds data related to solving the problem using a path search 
+        method, and functions which work with that data. #DR use proper capitalization / punctuation especially in docstring comments (the long triple quoted ones)
         
         Attributes:
-            transitions: list, cards which can be drawn
-            target: int, drawn cards until this number
-            endPointDic: dicitonary that stores endpoints
-            probablityDist: np.ndarry, the probability mass function of endpoints found so far
-            expectedVal: float, expected value
-            stdev: float, standard deviation
+            transitions: List, cards which can be drawn.
+            target: Int, drawn cards until this number.
+            endPointDic: Dicitonary that stores endpoints.
+            probablity_dist: Np.ndarry, the probability mass function of endpoints found so far.
+            expected_val: Float, expected value.
+            stdev: Float, standard deviation.
             
         Methods:
-            doPathWalk(self) -> object: Initiates and continues the pathwalk as long as there
-                are paths which can be contiued
+            doPathWalk(self) -> ConditionalProbOfEndpoints: Initiates and continues the pathwalk as 
+                long as there are paths which can be contiued.
             takeNextStep(self) -> None: Core of algorithm. Takes a "step" by moving along each 
                 possible path, ending paths which have reached and endpoint, and updates the
-                dictionaries which store that current paths and endpoints
+                dictionaries which store that current paths and endpoints.
     """
     def __init__(self,target: float, transitions: list):
-        """ initializes the solution object used as a container for data
+        """ Initializes the solution object used as a container for data.
         The information needed by the functions which perform the path walk is 
-        placed here. hist is the probability mass function for each endpoint, and 
-        is calculated after the path walk has finished
+        placed here. 
         """
         self.transitions = transitions
-        self.target = target
-        self.pathDic = None
-        self.endPointDic = None
-        self.probablityDist = None
-        self.expectedVal = None
+        self.target = target 
+        self.path_dic = None
+        self.end_point_dic = None
+        self.probablity_dist = None
+        self.expected_val = None
         self.stdev = None
     
-    def takeNextStep(self) -> None:
-        """ moves each path forward one step, keeping track of conditional probability.
+    def take_next_step(self) -> None:
+        """ Moves each path forward one step, keeping track of conditional probability.
 
-        Each possible transition (draw of a card) is done for each path. The new states generated
+        Each possible transition (draw of a card, coin, etc) is done for each path. The new states generated
         and their probabilities are stored in the in "nextPathDic". After new paths are caluculated
-        all that meet the end condition are moved to the "endPointDic". The new state is then set
-        to the current state to complete the step
+        all that meet the end condition are moved to the "end_point_dic". The new state is then set
+        to the current state to complete the step.
         
         Args:
-            self. the pathDic, endPointDic, target, and transitions attributes are used to calculate
-            the state of the pathDic and endPointDict after performing all tranisitions
+            Self: The pathDic, end_point_dic, target, and transitions attributes are used to calculate
+            the state of the pathDic and end_point_dict after performing all tranisitions.
         
         Returns:
-            None, the attributes of self are modified within the function
+            None: The attributes of self are modified within the function
         """
-        nextPathDic = {} # temporary var used to keep track of the result of the step
-        pathsToEnd = set() # temporary var used to keep track of which paths have met the termination criteria
+        next_path_dic = {} # temporary var used to keep track of the result of the step
+        paths_to_end = set() # temporary var used to keep track of which paths have met the termination criteria
         
-        for currentPathVal in self.pathDic: # loop through each point, or current state of a path
+        for current_path_val in self.path_dic: # loop through each point, or current state of a path
             for transition in self.transitions:# loop through each transformation (or card draw)
-                nextPathVal = currentPathVal + transition # this is value after a card has been drawn
+                next_path_val = current_path_val + transition # this is value after a card has been drawn
                 
-                if nextPathVal >= self.target: # if the path has reached an endpoint, add to a set
+                if next_path_val >= self.target: # if the path has reached an endpoint, add to a set
                 # which will be used later to move paths to the endpoint dictionary
-                    pathsToEnd.add(nextPathVal)
+                    paths_to_end.add(next_path_val)
 
                 # doing the transformation
-                if nextPathVal in nextPathDic: #this point has already been found, just need to update its probability
-                    nextPathDic[nextPathVal] = nextPathDic[nextPathVal] + self.pathDic[currentPathVal] \
+                if next_path_val in next_path_dic: #this point has already been found, just need to update its probability
+                    next_path_dic[next_path_val] += self.path_dic[current_path_val] \
                         / len(self.transitions)
                 else: # this point hasn't been found yet, need to create it
-                    nextPathDic[nextPathVal] = self.pathDic[currentPathVal] / len(self.transitions)
+                    next_path_dic[next_path_val] = self.path_dic[current_path_val] / len(self.transitions)
                     
-        self.pathDic = nextPathDic # all transformations have been done. The next state is set as the current state
+        self.path_dic = next_path_dic # all transformations have been done. The next state is set as the current state
                     
         # now that we've calucated the next steps for all paths, 
         # loop through paths that met the end condition and move them from
         # the path dictionary to the endpoint dictionary
-        for point in pathsToEnd:
-            if point in self.endPointDic: # if this endpoint has been reached before, add the
+        for point in paths_to_end:
+            if point in self.end_point_dic: # if this endpoint has been reached before, add the
             # probability of current path to probablility of endpoint
-                self.endPointDic[point] = self.endPointDic[point] + self.pathDic.pop(point) #pop from the pathDic becuase this path is ended
+                self.end_point_dic[point] += self.path_dic.pop(point) #pop from the pathDic becuase this path is ended
                 
             else: #havent reached this endpoint before, add it to the dictionary
-                self.endPointDic.update({point: self.pathDic.pop(point)})
+                self.end_point_dic.update({point: self.path_dic.pop(point)})
                     
-    def doPathWalk(self) -> object:
-        """ defines initial state and takes steps until all paths have been terminated
+    def doPathWalk(self): 
+        """ Defines initial state and takes steps until all paths have been terminated.
         
-        sets the initial condition (first point in the path) by defining self.pathDic and self.endPointDic
-        calls takeNextStep as long as there is a path which has not yet reached the termination condition
+        Sets the initial condition (first point in the path) by defining self.pathDic and self.end_point_dic.
+        Then calls takeNextStep as long as there is a path which has not yet reached the termination condition
 
         Args:
-            self, the container made by __init__
+            Self: The container made by __init__
         
         Returns:
-            self, the container with endPointDic fully specified
+            Self: The container with end_point_dic fully specified
         """
-        self.pathDic = {0: 1} ### first step is the initial state before we've done anything
-        self.endPointDic = {} # initializing the dict that keeps track of all endpoints and their probabilities
-        while len(self.pathDic): #       ## the dict is functioning as a stack in a breadth first search
+        self.path_dic = {0: 1} ### first step is the initial state before we've done anything
+        self.end_point_dic = {} # initializing the dict that keeps track of all endpoints and their probabilities
+        while len(self.path_dic): #       ## the dict is functioning as a stack in a breadth first search
                                             # as long as there is a path, keep iterating
-            ConditionalProbOfEndpoints.takeNextStep(self)   #### state of self is updated automatically
+            self.take_next_step()   #### state of self is updated automatically
 
         return self     
 
-@dataclass
-class monteCarlo():
-    """an object which holds data related to solving the problem using a monte Carlo integration 
-        method, and functions which work with that data
+class monteCarlo(): 
+    """An object which holds data related to solving the problem using a monte Carlo integration 
+        method, and functions which work with that data.
         
         Attributes:
-            transitions: list, cards which can be drawn
-            target: int, drawn cards until this number
-            endPointDic: dicitonary that stores endpoints
-            probablityDist: np.ndarry, the probability mass function of endpoints found so far
-            expectedVal: float, expected value
-            stdev: float, standard deviation
-            tol: float, tolerance. Criteria for calculation to be considered converged
-            batch: int, number of endpoints to find before checking convergence
+            transitions: List, the cards which are available to be drawn.
+            target: Int, the findEndPoints() method will draw cards until this number.
+            end_point_dic: Dicitonary, this stores the endpoints found by findEndPoints()
+            probablity_dist: Np.ndarry, the probability mass function of endpoints found so far.
+            expected_val: Float, the expected value of probablity_dist.
+            stdev: Float, the standard deviation of probablity_dist.
+            tol: Float, the tolerance for calculation to be considered converged.
+            batch: Int, the number of endpoints to find before checking convergence.
             
         Methods:
             mainMonteCarloIntegrationLoop(self) -> object: Manages the monte carlo interation by
-                calling functions find endpoints, update dictionary of endpoints, and check convergence
+                checking convergence and calling methods to: find endpoints, update dictionary of endpoints.  
             findEndPoints(self) -> np.ndarray: finds endpoints by drawing cards until target, returns
-                the endpoints it found as an Nx2 array
+                the endpoints it found as an Nx2 array.
             updateEndPointDic(self, tempEndPoints) -> None: takes the latest endpoints found by 
-                findEndPoints and adds them to the endPointDic.
+                findEndPoints and adds them to the end_point_dic.
     """
     def __init__(self,target: int,transitions: list, tol: float, batch: int):
-        """initializes the solution object used as a container for data
+        """Initializes the solution object used as a container for data
         The information needed by the functions which do the monte carlo itegration is 
         placed here. 
         
@@ -217,182 +214,180 @@ class monteCarlo():
         """
         self.transitions = transitions # cards which can be drawn
         self.target = target # drawn until this number
-        self.endPointDic = None # dicitonary that stores endpoints
-        self.probablityDist = None # the probability mass function of endpoints found so far
-        self.expectedVal = None # expected value
+        self.end_point_dic = None # dicitonary that stores endpoints
+        self.probablity_dist = None # the probability mass function of endpoints found so far
+        self.expected_val = None # expected value
         self.stdev = None # standard deviation
-        self.tol = tol # 
+        self.tol = tol # tolerance for integration
         self.batch = batch # number of endpoints to find before checking convergence
-
-    def mainMonteCarloIntegrationLoop(self) -> object:
-        """ initializes variables and performs steps in mc integration until tolerance is met
+        
+    def main_monte_carlo_integration_loop(self):
+        """ Initializes variables and performs steps in mc integration until the tolerance is met.
         
         Overall structure: a histogram of the frequency of occurance of endpoints is generated by 
-        drawing cards until the endpoint "batch" number of times. This histogram is 
+        drawing cards until the endpoint, "batch" number of times. This histogram is 
         then combined with the histogram made by previous runs, and the expected value calculated.
         if the expected value of the this updated histogram is close enough to the previously calculated
         expected value (as defined by the tolerance), and has been so for the last 5 iterations, the
         calculation is considered converged solution object is returned.
         
         Args:
-            self: the solution object whose attributes define the problem and record the solution and intermediates
+            self: The solution object whose attributes define the problem and record the solution and intermediates.
 
         Returns:
-            self: after the integration has converged
+            self: After the integration has converged.
         """
-        import numpy as np
-        self.endPointDic = {}  # dictionary will used to store the number of counts for each endpoint
-        self.expectedVal = np.inf  # this intial state ensures that integration cannot accidently converge
-        belowToleranceCount = 0 # used to keep track of the number of times in a row the tolerance has been met
+        self.end_point_dic = {}  # dictionary will used to store the number of counts for each endpoint
+        self.expected_val = np.inf  # this intial state ensures that integration cannot accidently converge
+        below_tolerance_count = 0 # used to keep track of the number of times in a row the tolerance has been met
         
-        while belowToleranceCount < 5: #if haven't been been below the tolerance 5 times in a row, keep integrating
-            tempEndPoints = monteCarlo.findEndPoints(self) # one "batch" of integrations returns an array of length "batch" 
-                # with the outcomes of each trial. 
-            monteCarlo.updateEndPointDic(self, tempEndPoints) # the results from latest batch are added to
+        while below_tolerance_count < 5: #if haven't been been below the tolerance 5 times in a row, keep integrating
+            temp_end_points = monteCarlo.find_end_points(self) # one "batch" of integrations returns an array of length "batch" 
+                                                           # with the outcomes of each trial. 
+            self.update_end_point_dic(temp_end_points) # the results from latest batch are added to
                 # the dictionary keeping track of the probability of endpoints
-            self.probablityDist = makeProbabilityDist(self.endPointDic) # the dictionary is converted to a numpy array
-            CurExpectedVal = expectVal(self.probablityDist) # getting the expected value for probability mass 
+            self.probablity_dist = make_probability_dist(self.end_point_dic) # the dictionary is converted to a numpy array
+            cur_expected_val = expect_val(self.probablity_dist) # getting the expected value for probability mass 
             # we have created so far function
             
-            if abs(CurExpectedVal - self.expectedVal) / CurExpectedVal < self.tol: # comparing the expected Val of this round to 
+            if abs(cur_expected_val - self.expected_val) / cur_expected_val < self.tol: # comparing the expected Val of this round to 
             # that of the previous. If it's within the tolerance update the belowToleranceCoun
-                belowToleranceCount += 1
+                below_tolerance_count += 1
 
             else: # if not within the tolerance the count is reset
             # must be within the tolerance for 5 iterations in a row for the MC interation to be considered converged
-                belowToleranceCount = 0
+                below_tolerance_count = 0
 
-            self.expectedVal = CurExpectedVal 
+            self.expected_val = cur_expected_val 
 
-        return self # once thee tolerance has been met, return the solution container 
+        return self # once the tolerance has been met, return the solution container 
 
-    def findEndPoints(self) -> np.ndarray:
-        """gererates endpoints used to build up the probability mass function 
+    def find_end_points(self) -> np.ndarray:
+        """Gererates the endpoints used to build up the probability mass function. 
         
         Cards are drawn until the termination condition is met, and the resulting number put in an
-        array. This is repeated "batch" times, and the array of endpoints found is returned
+        array. This is repeated "batch" times, and the array of endpoints found is returned.
         
         Args:
-            self: parameters stored in .batch and .transitions are used 
+            self: Parameters stored in self.batch and self.transitions are used here.
         
         Returns:
-            tempEndPoints: numpy array. an array of all the end points found
+            tempEndPoints: Numpy array, an array of all the end points found.
         """
-        tempEndPoints = np.zeros(self.batch, dtype = int) # declaring array which the endpoints found will be placed in
+        temp_end_points = np.zeros(self.batch, dtype = int) # declaring array which the endpoints found will be placed in
 
         for i in range(self.batch):
-            curPathVal = 0 # the initial state is 0, haven't drawn any cards yet 
-            while curPathVal < self.target: # as long as the sum of the cards is below the limit, keep drawing more
-                curPathVal = curPathVal + transitions[randint(0, len(transitions))] #adding the value of a random card 
-            tempEndPoints[i] = curPathVal # once we've reached an endpoint, add place it in the array
+            cur_path_val = 0 # the initial state is 0, haven't drawn any cards yet 
+            while cur_path_val < self.target: # as long as the sum of the cards is below the limit, keep drawing more
+                cur_path_val = cur_path_val + transitions[randint(0, len(transitions))] #adding the value of a random card 
+            temp_end_points[i] = cur_path_val # once we've reached an endpoint, add place it in the array
 
-        return tempEndPoints
+        return temp_end_points
 
-    def updateEndPointDic(self, tempEndPoints) -> None: 
-        """updates dictionary containg how many times each endpoint has been found
+    def update_end_point_dic(self, temp_end_points) -> None: 
+        """Updates the dictionary containg how many times each endpoint has been found.
         
         Args:
-            tempEndPoints: numpy array. an array of all the end points to be added
-            self: .endPointDic is dictionary which keeps track of how many times each endpoint has been found
-                throughout the MC integration process.
+            tempEndPoints: Numpy array, an array of all the end points to be added
+            self: This method uses self.end_point_dic, a dictionary which keeps track of how many times 
+                each endpoint has been found throughout the MC integration process.
                 
         Returns:
-            None, self.endPointDic is updated to include the endpoints in tempEndPoints
+            None: Self.end_point_dic is updated to include the endpoints in temp_end_points
         """
-        for m in tempEndPoints: # loop through 
-            if m in self.endPointDic: # if it's already there, add 1 to reflect it was found again
-                self.endPointDic[m] += 1
+        for m in temp_end_points: # loop through 
+            if m in self.end_point_dic: # if it's already there, add 1 to reflect it was found again
+                self.end_point_dic[m] += 1
             else: # if it's not in the dict, create a key for that end point and note that's its been found once
-                self.endPointDic[m] = 1
+                self.end_point_dic[m] = 1
                 
 
 """
 The following section contains functions for building probablity mass functions and calculating 
-expected val, stdev, which are used by both the Monte Carlo and path walk solutions
+expected value and standard deviation, which are used by both the Monte Carlo and path walk solutions.
 """
 
-def makeProbabilityDist(endPointDic: dict) -> np.ndarray:
-    """converts the dictionary of endpoints into a probability mass function
+def make_probability_dist(end_point_dic: dict) -> np.ndarray:
+    """Converts the dictionary of endpoints into a probability mass function.
     
         Takes the keys of the dictionary as the x axis, and the probablity (dict values) as 
         the y axis. Normalizes and returns a numpy array
     
         Args:
-            endPointDic: the dictionary of end points and there likely hood of occurance, as
-            obtained from either the monte carlo or path search solutins
+            end_point_dic: Dictionary, the end points and their likelyhood of occurance, as
+            obtained from either the monte carlo or path search solutins.
             
         Returns:
-            probMassDist: Nx2 numpy array, float. [:,0] is the endpoint and [:,1] is the
-            probability of that endpoint
+            probMassDist: Nx2 numpy array of float, the probability mass function where [:,0] 
+            is the endpoint and [:,1] is the probability of that endpoint.
     """
-    import numpy as np
-    #make the probability density function given the outDic
-    def norm(arrayIn: float) -> np.ndarray: #### normalize
-        """ sub function to normalize the probability mass function 
+
+    #make the probability density function given the out_dic
+    def norm(arrayIn: np.ndarray) -> np.ndarray: #### normalize
+        """ This is a sub function to normalize the probability mass function. 
         
         Args:
-            arrayIn: the un-normalized probalility mass function
+            arrayIn: Np.ndarray, the un-normalized probalility mass function.
         Returns:
-            arrayIn: after normalization
+            arrayIn: Np.ndarray, the array after normalization.
         """
         normFact = sum(arrayIn[:, 1]) # sum all probabilities 
-        arrayIn[: ,1] = arrayIn[:, 1]/normFact # divide by sum all prob. 
+        arrayIn[: ,1] = arrayIn[:, 1]/normFact # divide by the sum of all probabilities
 
         return arrayIn
 
-    probMassDist = np.zeros([len(endPointDic), 2]) # creating empty array to be populated shortly
+    prob_mass_dist = np.zeros([len(end_point_dic), 2]) # creating empty array to be populated shortly
 
-    for i ,endPoint in enumerate(endPointDic): #### placing info from dictionary in numpy array
-        probMassDist[i][0] = endPoint
-        probMassDist[i][1] = endPointDic[endPoint]
+    for i ,endPoint in enumerate(end_point_dic): #### placing info from dictionary in numpy array
+        prob_mass_dist[i][0] = endPoint
+        prob_mass_dist[i][1] = end_point_dic[endPoint]
 
-    return norm(probMassDist) # normalizing and returning
+    return norm(prob_mass_dist) # normalizing and returning
 
-def expectVal(arrayIn: int) -> float:
-    """takes a normalized array and returns the expected value
-    expected value = sum( xi*p(xi))
+def expect_val(arrayIn: np.ndarray) -> float: 
+    """Takes a normalized array and returns the expected value, where
+        expected value = sum( xi*p(xi)).
 
     Args:
-        arrayIn: int a 2xN array containing the value and its relative probability.
-        Must be normalized
+        arrayIn: Int, a 2xN array containing the value and its relative probability.
+        This input must be normalized.
 
     Returns:
-        eVal: float, the expected value of probability mass function
+        eVal: Float, the expected value of the probability mass function.
     """
     eVal = 0.0 # declare expected value
     for i in arrayIn:
-        eVal = eVal + i[0] * i[1]
+        eVal += i[0] * i[1]
 
     return eVal
 
-def stdev(arrayIn: int ,expectedVal: float) -> float:
-    """takes a normalized array and returns the standard deviation
-        variance = E((X-u)^2) = Sum [p(xi)*(xi-u)^2]
-        stdev = var**0.5
-    
+def stdev(arrayIn: int, expected_val: float) -> float:
+    """Takes a normalized array and returns the standard deviation, where
+        variance = E((X-u)^2) = Sum [p(xi)*(xi-u)^2] and stdev = var**0.5.
+        
     Args:
-        arrayIn: int, a 2xN array containing the value and its relative probability.
-        Must be normalized 
-        E: expected value of the prob. mass distribution
+        arrayIn: Int, a 2xN array containing the value and its relative probability.
+        This input must be normalized.
+        expected_val: Float, the expected value of the probability mass distribution.
         
     Returns:
-        stdev: float, the standard deviation of the prob. mass function
+        stdev: Float, the standard deviation of the prob. mass function.
     """
     stdev = 0.0 # declare standard deviation
     for i in arrayIn: # loop through a prob mass function and calc stdev
-        stdev = stdev + i[1] * ((i[0] - expectedVal) ** 2)
+        stdev += i[1] * ((i[0] - expected_val) ** 2) 
 
     return stdev ** 0.5
 
 if __name__ == "__main__":
     """
     Script which sets up the problem, calls functions to solve problem using the path search and
-    Monte Carlo (MC) integration methods, and compares the results of those two methods
+    Monte Carlo (MC) integration methods, and compares the results of those two methods.
     """
-    def callPathWalk(target: int, transitions: list) -> object:
-        """ calls the functions used find solution and intermediates using the path walk strategy
+    def callPathWalk(target: int, transitions: list):
+        """ Calls the functions used find solution and intermediates using the path walk strategy.
         
-            gets the solution container from the pathwalk algorithm, and converts the dictionary with
+            Gets the solution container from the pathwalk algorithm, and converts the dictionary with
             the conditional probability of each endpoint into a probability mass function. The expected value
             and standard deviation are calcuated from the prob. mass func. These are saved as attributes of
             the solution container initialized by ConditionalProbOfEndpoints
@@ -407,25 +402,24 @@ if __name__ == "__main__":
                 and intermediates 
         """
         # the solution object has the conditional probabilities of all endpoints 
-        pathWalkSolution = ConditionalProbOfEndpoints(target, transitions).doPathWalk()
-        # calcuating the probability mass function of all endpoints from the endPointDic
-        pathWalkSolution.probablityDist = makeProbabilityDist(pathWalkSolution.endPointDic)
+        pathWalkSolution = conditionalProbOfEndpoints(target, transitions).doPathWalk()
+        # calcuating the probability mass function of all endpoints from the end_point_dic
+        pathWalkSolution.probablity_dist = make_probability_dist(pathWalkSolution.end_point_dic)
         # converting the x axis of the prob mass function from value of endpoint to the amount of "overshoot"
-        pathWalkSolution.probablityDist[:, 0] = (pathWalkSolution.probablityDist[:, 0] - target)
+        pathWalkSolution.probablity_dist[:, 0] = (pathWalkSolution.probablity_dist[:, 0] - target)
         # calculating the expected value from the prob mass function
-        pathWalkSolution.expectedVal= expectVal(pathWalkSolution.probablityDist)
+        pathWalkSolution.expected_val= expect_val(pathWalkSolution.probablity_dist)
         # calculation the standard deviation from the prob mass function and expected value
-        pathWalkSolution.stdev= stdev(pathWalkSolution.probablityDist,\
-                                                        pathWalkSolution.expectedVal)
+        pathWalkSolution.stdev= stdev(pathWalkSolution.probablity_dist,\
+                                                        pathWalkSolution.expected_val)
 
         return pathWalkSolution
 
-    def callMonteCarloIntegration(target: int, transitions: list, tol: float, batch: int) \
-        -> object: 
+    def callMonteCarloIntegration(target: int, transitions: list, tol: float, batch: int): 
         ''' calls the functions used find solution and intermediates using the monte carlo integration strategy
         
             This function is similar in structure to callPathWalk. The solution container is returned from 
-            monteCarlo, and calculates expected value and standard deviation from .probablityDist
+            monteCarlo, and calculates expected value and standard deviation from .probablity_dist
         
             Args: 
                 target: the number at which to stop drawing cards 
@@ -441,23 +435,23 @@ if __name__ == "__main__":
                 and intermediates 
         '''
         # get solution object
-        monteCarloSolution = monteCarlo(target, transitions, tol, batch).mainMonteCarloIntegrationLoop() 
+        monteCarloSolution = monteCarlo(target, transitions, tol, batch).main_monte_carlo_integration_loop() 
         # converting the x axis of the prob mass function from value of endpoint to the amount of "overshoot"
-        monteCarloSolution.probablityDist[:, 0] = (monteCarloSolution.probablityDist[:, 0] - target)
+        monteCarloSolution.probablity_dist[:, 0] = (monteCarloSolution.probablity_dist[:, 0] - target)
         # recalculate expected value for the overshoot. could also just have subtracted targer from expected val
-        monteCarloSolution.expectedVal = expectVal(monteCarloSolution.probablityDist)
+        monteCarloSolution.expected_val = expect_val(monteCarloSolution.probablity_dist)
         # calculation the standard deviation from the prob mass function and expected value
-        monteCarloSolution.stdevN = stdev(monteCarloSolution.probablityDist, \
-                                                   monteCarloSolution.expectedVal)
+        monteCarloSolution.stdevN = stdev(monteCarloSolution.probablity_dist, \
+                                                   monteCarloSolution.expected_val)
 
         return monteCarloSolution
     
     #variables which define the problem
-    transitions = [2,3,4,5,6,7,8,9,10] #list, the possible transitions, or cards in the deck
-    target = 210 # int, threshold at which to stop drawing cards. when the summed value of the cards is greater or equal, we have reached and endpoint
+    transitions = [8,9,10] #list, the possible transitions, or cards in the deck
+    target = 30 # int, threshold at which to stop drawing cards. when the summed value of the cards is greater or equal, we have reached and endpoint
     
-    #variables used to set behavoir of monte carlo integrator
-    tol = 0.01 # float, convergence tolerance for integration, setting too small will make the MC take a really long time
+    #variables used to set behavior of monte carlo integrator
+    tol = 0.1 # float, convergence tolerance for integration, setting too small will make the MC take a really long time
     batch = 1000 #int, number of endpoints to find before checking if converged
 
     #calling functions and getting solutions for path walk and monte carlo 
@@ -467,6 +461,8 @@ if __name__ == "__main__":
     
     # checking how close the monte carlo is to the path walk answer
     print('the difference between the expected value for pathwalk and monte carlo is ' + \
-          str(np.round((pathWalkSolution.expectedVal - monteCarloSolution.expectedVal) \
-                       / pathWalkSolution.expectedVal * 100, 3)) + ' %')
+          str(np.round((pathWalkSolution.expected_val - monteCarloSolution.expected_val) \
+                       / pathWalkSolution.expected_val * 100, 3)) + ' %')
+    
+
     
