@@ -74,13 +74,13 @@ then the monte carlo solutino is better because it's trivial to parrallelize
 
 @author: Ben
 """
-from dataclasses import dataclass
+
 import numpy as np
 from numpy.random import randint
 
 class conditionalProbOfEndpoints():
     """An object which holds data related to solving the problem using a path search 
-        method, and functions which work with that data. #DR use proper capitalization / punctuation especially in docstring comments (the long triple quoted ones)
+        method, and functions which work with that data.
         
         Attributes:
             transitions: List, cards which can be drawn.
@@ -170,9 +170,9 @@ class conditionalProbOfEndpoints():
         """
         self.path_dic = {0: 1} ### first step is the initial state before we've done anything
         self.end_point_dic = {} # initializing the dict that keeps track of all endpoints and their probabilities
-        while len(self.path_dic): #       ## the dict is functioning as a stack in a breadth first search
+        while len(self.path_dic): #       ## the dict is used to keep track of paths in a breadth first search
                                             # as long as there is a path, keep iterating
-            self.take_next_step()   #### state of self is updated automatically
+            self.take_next_step()   #### state of self is updated 
 
         return self     
 
